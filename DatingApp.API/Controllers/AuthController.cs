@@ -21,6 +21,7 @@ namespace DatingApp.API.Controllers
         private readonly IAuthRepository _repo;
         private readonly IConfiguration _config;
         private readonly IMapper _mapper;
+        private string username;
 
         public AuthController(IAuthRepository repo, IConfiguration config, IMapper mapper)
         {
@@ -42,16 +43,18 @@ namespace DatingApp.API.Controllers
                 return BadRequest("User already exists!");
             }
 
-            var userToCreate = new User
+            var userToCreate = _mapper.Map<User>(userForRegisterDto);
             {
-                Username = userForRegisterDto.Username
+                username = userForRegisterDto.Username;
             };
 
-            var createdUser = _repo.Register(userToCreate, userForRegisterDto.Password);
+            var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
+
+            var userToReturn = _mapper.Map<UserForDetailedDto>(createdUser);
 
             // We need to return CreatedAtRoute!
 
-            return StatusCode(201);
+            return CreatedAtRoute("GetUser", new {controller = "Users", id = createdUser.Id}, userToReturn);
 
         }
 
